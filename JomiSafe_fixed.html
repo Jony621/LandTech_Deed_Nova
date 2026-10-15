@@ -1,0 +1,690 @@
+<!doctype html>
+<html lang="bn">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>JomiSafe</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Tiro+Bangla&display=swap">
+<style>
+/* Layout: one narrow column like a mouza sheet. Header with dag-grid motif, three tab panels, fixed bottom tab bar. */
+:root{
+  --bg:#EDF2EC; --surface:#FFFFFF; --surface-2:#F4F8F3; --fg:#12251A; --muted:#55695C; --line:#D2DDD3;
+  --accent:#0E6B49; --accent-fg:#FFFFFF; --accent-soft:#DCEEE4;
+  --ok:#1B7A3D; --ok-bg:#DCF1E2; --warn:#8A5F00; --warn-bg:#FBEDC4; --bad:#B3261E; --bad-bg:#FADCD8;
+  --display:'Tiro Bangla','Noto Serif Bengali',Georgia,serif;
+  --body:'Hind Siliguri','Noto Sans Bengali',system-ui,-apple-system,sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0D1911; --surface:#15251B; --surface-2:#1B2F22; --fg:#E5F0E7; --muted:#94A99B; --line:#284133;
+    --accent:#4CC590; --accent-fg:#06130C; --accent-soft:#1B3A2A;
+    --ok:#6FD28C; --ok-bg:#17361F; --warn:#E6B94A; --warn-bg:#3A2F0E; --bad:#FF8F85; --bad-bg:#451B17;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0D1911; --surface:#15251B; --surface-2:#1B2F22; --fg:#E5F0E7; --muted:#94A99B; --line:#284133;
+  --accent:#4CC590; --accent-fg:#06130C; --accent-soft:#1B3A2A;
+  --ok:#6FD28C; --ok-bg:#17361F; --warn:#E6B94A; --warn-bg:#3A2F0E; --bad:#FF8F85; --bad-bg:#451B17;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{
+  background:var(--bg); color:var(--fg); font-family:var(--body); font-size:16px; line-height:1.55;
+  padding-left:max(16px, env(safe-area-inset-left, 0px));
+  padding-right:max(16px, env(safe-area-inset-right, 0px));
+  padding-block:14px 112px;
+}
+.app{max-width:560px; margin:0 auto; display:flex; flex-direction:column; gap:16px}
+h1,h2,h3,p{margin:0}
+h2{font-family:var(--display); font-weight:400; font-size:1.375rem; line-height:1.3; text-wrap:balance}
+h3{font-size:1rem; font-weight:600}
+button,input{font:inherit; color:inherit}
+:focus-visible{outline:3px solid var(--accent); outline-offset:2px}
+
+/* header */
+.top{
+  display:flex; align-items:center; gap:12px; padding:14px 16px; border-radius:14px; background:var(--accent); color:var(--accent-fg);
+  background-image:
+    linear-gradient(to right, rgba(255,255,255,.10) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255,255,255,.10) 1px, transparent 1px);
+  background-size:22px 22px;
+}
+.top svg{flex:none}
+.brand{font-family:var(--display); font-size:1.75rem; line-height:1.1}
+.brand-sub{font-size:.875rem; opacity:.9}
+.demo-tag{margin-left:auto; flex:none; font-size:.75rem; font-weight:600; letter-spacing:.02em; padding:3px 9px; border-radius:999px; background:rgba(255,255,255,.18); border:1px solid rgba(255,255,255,.35)}
+.top-text{min-width:0}
+
+.panel{display:flex; flex-direction:column; gap:16px}
+.panel[hidden]{display:none}
+.lede{color:var(--muted); font-size:.9375rem}
+
+.card{background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:16px; display:flex; flex-direction:column; gap:14px; min-width:0}
+.label{display:block; font-size:.8125rem; font-weight:600; color:var(--muted); margin-bottom:4px}
+.field{min-width:0}
+.input{width:100%; min-height:48px; padding:8px 12px; border:1.5px solid var(--line); border-radius:10px; background:var(--surface-2); color:var(--fg)}
+.input:focus{border-color:var(--accent)}
+.row2{display:grid; grid-template-columns:1fr 1fr; gap:12px}
+.btn{min-height:48px; padding:8px 18px; border:0; border-radius:10px; background:var(--accent); color:var(--accent-fg); font-weight:600; cursor:pointer}
+.btn:active{transform:translateY(1px)}
+
+/* sample chips */
+.samples{display:grid; grid-template-columns:1fr 1fr; gap:8px}
+.chip{
+  text-align:left; padding:8px 12px; min-height:56px; border:1.5px solid var(--line); border-radius:10px; background:var(--surface-2); cursor:pointer;
+  display:flex; flex-direction:column; min-width:0;
+}
+.chip small{color:var(--muted); font-size:.8125rem}
+.chip[aria-pressed="true"]{border-color:var(--accent); background:var(--accent-soft)}
+
+/* verdict */
+.verdict{display:flex; flex-direction:column; gap:12px}
+.score-row{display:flex; align-items:baseline; gap:12px; flex-wrap:wrap}
+.score{font-family:var(--display); font-size:2.75rem; line-height:1}
+.score small{font-size:1rem; color:var(--muted); font-family:var(--body)}
+.pill{display:inline-block; padding:3px 12px; border-radius:999px; font-weight:600; font-size:.9375rem}
+.pill.ok{background:var(--ok-bg); color:var(--ok)}
+.pill.warn{background:var(--warn-bg); color:var(--warn)}
+.pill.bad{background:var(--bad-bg); color:var(--bad)}
+.meter{position:relative; height:12px; border-radius:6px; background:var(--surface-2); border:1px solid var(--line); overflow:hidden}
+.meter .fill{position:absolute; inset:0 auto 0 0; border-radius:6px}
+.meter .fill.ok{background:var(--ok)} .meter .fill.warn{background:var(--warn)} .meter .fill.bad{background:var(--bad)}
+.meter .tick{position:absolute; top:0; bottom:0; width:2px; background:var(--bg)}
+.zones{display:flex; font-size:.75rem; color:var(--muted)}
+.zones span{white-space:nowrap}
+.rec{display:grid; grid-template-columns:auto 1fr; gap:2px 12px; font-size:.9375rem; padding:12px; background:var(--surface-2); border-radius:10px}
+.rec dt{color:var(--muted)} .rec dd{margin:0; min-width:0; overflow-wrap:anywhere}
+
+.checks{list-style:none; margin:0; padding:0; display:flex; flex-direction:column}
+.check{display:grid; grid-template-columns:32px 1fr; gap:12px; padding:12px 0; border-top:1px solid var(--line)}
+.check:first-child{border-top:0}
+.mark{width:32px; height:32px; border-radius:50%; display:grid; place-items:center; font-weight:700; font-size:1rem}
+.mark.ok{background:var(--ok-bg); color:var(--ok)} .mark.warn{background:var(--warn-bg); color:var(--warn)} .mark.bad{background:var(--bad-bg); color:var(--bad)}
+.check h3{font-size:.9375rem}
+.check p{font-size:.9375rem; color:var(--muted); min-width:0; overflow-wrap:anywhere}
+.check .tip{color:var(--fg); margin-top:2px}
+.check .tip b{font-weight:600}
+
+/* steppers */
+.seg{display:grid; grid-template-columns:1fr 1fr; border:1.5px solid var(--line); border-radius:10px; overflow:hidden}
+.seg button{min-height:46px; border:0; background:var(--surface-2); cursor:pointer; font-weight:500}
+.seg button[aria-pressed="true"]{background:var(--accent); color:var(--accent-fg); font-weight:600}
+.steppers{display:grid; grid-template-columns:1fr 1fr; gap:10px}
+.stepper{border:1.5px solid var(--line); border-radius:10px; padding:8px 10px; background:var(--surface-2); min-width:0}
+.stepper .label{margin:0 0 4px}
+.stepper .ctl{display:flex; align-items:center; justify-content:space-between; gap:8px}
+.stepper button{width:40px; height:40px; border-radius:50%; border:1.5px solid var(--line); background:var(--surface); cursor:pointer; font-size:1.25rem; line-height:1}
+.stepper button:disabled{opacity:.35; cursor:default}
+.stepper output{font-family:var(--display); font-size:1.5rem; min-width:1.5ch; text-align:center}
+
+/* heirs result */
+.heirs{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:12px}
+.heir{display:flex; flex-direction:column; gap:6px}
+.heir-top{display:flex; justify-content:space-between; align-items:baseline; gap:12px}
+.heir-top b{font-weight:600}
+.heir-top .amt{font-family:var(--display); font-size:1.25rem; white-space:nowrap}
+.bar{height:10px; border-radius:5px; background:var(--surface-2); border:1px solid var(--line); overflow:hidden}
+.bar i{display:block; height:100%; background:var(--accent); border-radius:5px}
+.heir small{color:var(--muted); font-size:.8125rem}
+.note{font-size:.875rem; color:var(--muted); padding:10px 12px; border-radius:10px; background:var(--surface-2)}
+.note.warn{background:var(--warn-bg); color:var(--warn)}
+.empty{padding:14px; text-align:center; color:var(--muted); border:1.5px dashed var(--line); border-radius:10px}
+
+/* cost */
+.rates{display:grid; grid-template-columns:1fr 1fr; gap:10px}
+.cost{width:100%; border-collapse:collapse; font-size:.9375rem}
+.cost th,.cost td{padding:9px 0; border-top:1px solid var(--line); text-align:left; font-weight:400}
+.cost td{text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap}
+.cost tr:first-child th,.cost tr:first-child td{border-top:0}
+.cost th small{display:block; color:var(--muted); font-size:.8125rem}
+.cost tfoot th,.cost tfoot td{font-weight:700; border-top:2px solid var(--fg); font-size:1.0625rem}
+.big{display:flex; flex-direction:column; gap:2px; padding:12px; border-radius:10px; background:var(--accent-soft)}
+.big span{font-size:.875rem; color:var(--muted)}
+.big strong{font-family:var(--display); font-weight:400; font-size:1.75rem; line-height:1.2}
+.docs{list-style:none; margin:0; padding:0; display:flex; flex-direction:column}
+.docs li{border-top:1px solid var(--line)}
+.docs li:first-child{border-top:0}
+.docs label{display:grid; grid-template-columns:28px 1fr; gap:10px; align-items:start; padding:10px 0; cursor:pointer; font-size:.9375rem}
+.docs input{width:22px; height:22px; margin:2px 0 0; accent-color:var(--accent)}
+.docs small{display:block; color:var(--muted); font-size:.8125rem}
+.docs-head{display:flex; justify-content:space-between; align-items:baseline; gap:12px}
+.docs-head output{font-weight:600; color:var(--accent)}
+.foot{font-size:.8125rem; color:var(--muted); text-align:center; padding:0 8px}
+.input[aria-invalid="true"]{border-color:var(--bad); box-shadow:0 0 0 1px var(--bad)}
+.field-error{color:var(--bad); font-size:.875rem; margin-top:4px}
+.source-banner{padding:12px; border:1.5px solid var(--warn); border-radius:10px; background:var(--warn-bg); color:var(--fg); font-size:.9rem}
+.source-banner strong{display:block; margin-bottom:3px}
+.status-banner{padding:10px 12px; border-radius:10px; background:var(--surface-2); border:1px solid var(--line); font-size:.875rem; color:var(--muted)}
+
+/* bottom tab bar */
+.tabs{
+  position:fixed; left:0; right:0; bottom:0; z-index:5; background:var(--surface); border-top:1px solid var(--line);
+  padding:8px max(16px, env(safe-area-inset-right, 0px)) calc(8px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px));
+}
+.tabs-in{max-width:560px; margin:0 auto; display:grid; grid-template-columns:repeat(3,1fr); gap:6px}
+.tab{min-height:52px; border:0; border-radius:10px; background:transparent; color:var(--muted); cursor:pointer; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:1px; font-size:.8125rem; font-weight:500}
+.tab svg{width:22px; height:22px}
+.tab[aria-selected="true"]{background:var(--accent-soft); color:var(--accent); font-weight:700}
+@media (prefers-reduced-motion:no-preference){ .meter .fill{transition:width .35s ease} }
+@media (max-width:380px){ .top{flex-wrap:wrap;gap:8px}.top-text{flex:1}.lang-toggle{margin-left:auto}.demo-tag{margin-left:0} }
+@media (max-width:360px){ .rates,.steppers,.row2{grid-template-columns:1fr} }
+</style>
+</head>
+<body>
+
+
+<div class="app">
+  <header class="top">
+    <svg width="40" height="40" viewBox="0 0 40 40" aria-hidden="true"><rect x="3" y="3" width="34" height="34" rx="4" fill="none" stroke="currentColor" stroke-width="2"/><path d="M3 15h20M23 3v34M23 26h14M13 15v22" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M28 9l3 3 5-6" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    <div class="top-text">
+      <div class="brand">জমিসেফ</div>
+      <div class="brand-sub">জমি কেনার আগে দেখে নিন</div>
+    </div>
+    <button class="lang-toggle" id="languageToggle" type="button" aria-label="Switch language to English">English</button>
+    <span class="demo-tag">ডেমো ডেটা</span>
+  </header>
+
+  <main>
+    <!-- Tab 1 -->
+    <section class="panel" id="panel-risk" role="tabpanel" aria-labelledby="tab-risk">
+      <div>
+        <h2>জমি কেনার ঝুঁকি যাচাই</h2>
+        <p class="lede">খতিয়ান ও দাগ নম্বর দিয়ে ডেমো যাচাই চালান। এটি সরকারি ভূমি রেকর্ডে অনুসন্ধান করে না।</p>
+        <div class="source-banner"><strong>ডেমো ডেটা — সরকারি যাচাই নয়</strong>নিচের চারটি রেকর্ড এই প্রোটোটাইপের নমুনা। ফলাফল বাস্তব খতিয়ান, মামলা, বন্ধক, খাজনা বা নামজারি যাচাই করে না; “তথ্য পাওয়া যায়নি” মানে সরকারি রেকর্ডে সমস্যা নেই—এমন নয়।</div>
+      </div>
+      <div class="card">
+        <div>
+          <span class="label">নমুনা রেকর্ড বেছে নিন</span>
+          <div class="samples" id="samples"></div>
+        </div>
+        <form id="riskForm" class="card" style="padding:0;border:0;gap:12px" autocomplete="off">
+          <div class="row2">
+            <div class="field"><label class="label" for="khotian">খতিয়ান নং</label><input class="input" id="khotian" inputmode="numeric" required></div>
+            <div class="field"><label class="label" for="dag">দাগ নং</label><input class="input" id="dag" inputmode="numeric" required></div>
+          </div>
+          <div class="field"><label class="label" for="seller">বিক্রেতার নাম</label><input class="input" id="seller" placeholder="যার কাছ থেকে কিনবেন"></div>
+          <button class="btn" type="submit">যাচাই করুন</button>
+        </form>
+      </div>
+      <div id="riskOut" aria-live="polite"></div>
+    </section>
+
+    <!-- Tab 2 -->
+    <section class="panel" id="panel-heirs" role="tabpanel" aria-labelledby="tab-heirs" hidden>
+      <div>
+        <h2>ওয়ারিশ হিসাব</h2>
+        <p class="lede">মুসলিম আইন (হানাফি)-এর সীমিত উদাহরণভিত্তিক হিসাব। এটি পূর্ণাঙ্গ ওয়ারিশ নির্ধারণ বা আইনি মতামত নয়।</p>
+        <div class="source-banner"><strong>শুধু প্রাথমিক ধারণার জন্য</strong>হিসাবটি কেবল কয়েক ধরনের ওয়ারিশ ধরে। ভাই-বোন, দাদা-দাদী/নানা-নানী, অন্যান্য সম্ভাব্য ওয়ারিশ, ঋণ, দাফন-কাফনের খরচ ও বৈধ ওসিয়ত বিবেচনা করে না। বাস্তব বণ্টনের আগে সম্পূর্ণ ওয়ারিশ তালিকা ও আইনজীবীর পরামর্শ জরুরি।</div>
+      </div>
+      <div class="card">
+        <div>
+          <span class="label">মৃত ব্যক্তি</span>
+          <div class="seg" id="gender">
+            <button type="button" data-v="male" aria-pressed="true">পুরুষ</button>
+            <button type="button" data-v="female" aria-pressed="false">নারী</button>
+          </div>
+        </div>
+        <div class="field"><label class="label" for="landArea">মোট জমি (শতাংশ)</label><input class="input" id="landArea" inputmode="decimal" value="12"></div>
+        <div class="steppers" id="steppers"></div>
+      </div>
+      <div class="card" id="heirOut" aria-live="polite"></div>
+    </section>
+
+    <!-- Tab 3 -->
+    <section class="panel" id="panel-cost" role="tabpanel" aria-labelledby="tab-cost" hidden>
+      <div>
+        <h2>রেজিস্ট্রি খরচ</h2>
+        <p class="lede">আপনার দেওয়া মূল্য ও হার দিয়ে আনুমানিক হিসাব। হার সরকারি ভাবে যাচাই করা নয়।</p>
+      </div>
+      <div class="card">
+        <div class="row2">
+          <div class="field"><label class="label" for="price">দলিল মূল্য (টাকা)</label><input class="input" id="price" inputmode="numeric" value="20,00,000"></div>
+          <div class="field"><label class="label" for="assessed">সরকারি মৌজা মূল্য (ঐচ্ছিক)</label><input class="input" id="assessed" inputmode="numeric" placeholder="জানা থাকলে"></div>
+        </div>
+        <div class="rates">
+          <div class="field"><label class="label" for="r-reg">রেজিস্ট্রেশন ফি (%)</label><input class="input" id="r-reg" inputmode="decimal" value="1"></div>
+          <div class="field"><label class="label" for="r-stamp">স্ট্যাম্প শুল্ক (%)</label><input class="input" id="r-stamp" inputmode="decimal" value="1.5"></div>
+          <div class="field"><label class="label" for="r-lg">স্থানীয় সরকার কর (%)</label><input class="input" id="r-lg" inputmode="decimal" value="2"></div>
+          <div class="field"><label class="label" for="r-src">উৎসে কর (%)</label><input class="input" id="r-src" inputmode="decimal" value="2"></div>
+        </div>
+        <div class="field"><label class="label" for="misc">অন্যান্য ফি (এফিডেভিট, কোর্ট ফি ইত্যাদি, টাকা)</label><input class="input" id="misc" inputmode="numeric" value="1,000"></div>
+      </div>
+      <div class="card" id="costOut" aria-live="polite"></div>
+      <div class="card">
+        <div class="docs-head"><h3>কাগজপত্র তালিকা</h3><output id="docCount"></output></div>
+        <ul class="docs" id="docs"></ul>
+      </div>
+    </section>
+  </main>
+
+  <p class="foot">জমিসেফ একটি হ্যাকাথন প্রোটোটাইপ। এখানকার তথ্য নমুনা এবং আইনি পরামর্শ নয়। কেনার আগে সাব-রেজিস্ট্রার অফিস ও আইনজীবীর সাথে মিলিয়ে নিন।</p>
+</div>
+
+<nav class="tabs" aria-label="জমিসেফ বিভাগ">
+  <div class="tabs-in" role="tablist">
+    <button class="tab" id="tab-risk" role="tab" aria-selected="true" aria-controls="panel-risk" data-t="risk">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/><path d="M8.5 12l2.5 2.5 4.5-5"/></svg>
+      জমি যাচাই
+    </button>
+    <button class="tab" id="tab-heirs" role="tab" aria-selected="false" aria-controls="panel-heirs" data-t="heirs">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="5" r="2.5"/><circle cx="5" cy="19" r="2.5"/><circle cx="19" cy="19" r="2.5"/><path d="M12 7.5V12M12 12H5v4.5M12 12h7v4.5"/></svg>
+      ওয়ারিশ
+    </button>
+    <button class="tab" id="tab-cost" role="tab" aria-selected="false" aria-controls="panel-cost" data-t="cost">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M8.5 7.5h7M8.5 12h2M13.5 12h2M8.5 16h2M13.5 16h2"/></svg>
+      রেজিস্ট্রি খরচ
+    </button>
+  </div>
+</nav>
+
+<script>
+/* ---------- LOGIC ---------- */
+const BN_DIGITS='০১২৩৪৫৬৭৮৯';
+const bn=s=>String(s).replace(/\d/g,d=>window.JOMI_LANG==='en'?d:BN_DIGITS[d]);
+const toEn=s=>String(s).replace(/[০-৯]/g,d=>BN_DIGITS.indexOf(d));
+const nf=(x,f=2)=>{try{return new Intl.NumberFormat(window.JOMI_LANG==='en'?'en-IN':'bn-BD',{maximumFractionDigits:f}).format(x)}catch(e){return bn(x.toLocaleString('en-IN',{maximumFractionDigits:f}))}};
+const num=s=>{const v=parseFloat(toEn(s).replace(/[,\s৳]/g,''));return isFinite(v)?v:0};
+// Strict numeric parsing: reject partial strings such as "123abc" instead of silently parsing 123.
+function parseStrictNumber(raw,{allowEmpty=false}={}){
+  const text=toEn(String(raw??'')).trim().replace(/[৳\s]/g,'');
+  if(!text) return allowEmpty?{ok:true,value:0,empty:true}:{ok:false,message:'একটি সংখ্যা লিখুন।'};
+  // Accept plain digits/decimal or correctly grouped thousands (e.g. 20,00,000 / 2,000,000).
+  const valid=/^(?:\d+|\d{1,3}(?:,\d{2})*,\d{3})(?:\.\d+)?$|^\d+\.\d+$/.test(text);
+  if(!valid) return {ok:false,message:'শুধু বৈধ সংখ্যা লিখুন; অক্ষর বা ভুল কমা ব্যবহার করবেন না।'};
+  const value=Number(text.replace(/,/g,''));
+  if(!Number.isFinite(value)) return {ok:false,message:'সংখ্যাটি গ্রহণযোগ্য সীমার বাইরে।'};
+  return {ok:true,value,empty:false};
+}
+function setFieldError(input,message){
+  input.setAttribute('aria-invalid',message?'true':'false');
+  const id=input.id+'-error'; let node=document.getElementById(id);
+  if(message){if(!node){node=document.createElement('p');node.id=id;node.className='field-error';node.setAttribute('role','alert');input.insertAdjacentElement('afterend',node)}node.textContent=message}
+  else if(node) node.remove();
+}
+
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+/* demo land records */
+const RECORDS=[
+  {khotian:'1204',dag:'3351',mouza:'সাভার, ঢাকা',area:12,owner:'আব্দুল করিম',seller:'আব্দুল করিম',khas:false,mortgage:'',mamla:'',khajnaDue:0,namjari:true,transfers5:1},
+  {khotian:'887',dag:'2210',mouza:'গজারিয়া, মুন্সীগঞ্জ',area:8.5,owner:'রহিমা বেগম',seller:'রহিমা বেগম',khas:false,mortgage:'সোনালী ব্যাংক (কৃষি ঋণ)',mamla:'',khajnaDue:2,namjari:true,transfers5:2},
+  {khotian:'455',dag:'1098',mouza:'কালিয়াকৈর, গাজীপুর',area:20,owner:'বাংলাদেশ সরকার (খাস)',seller:'আনোয়ার হোসেন',khas:true,mortgage:'',mamla:'',khajnaDue:0,namjari:false,transfers5:0},
+  {khotian:'2031',dag:'4472',mouza:'সিলেট সদর',area:5,owner:'মোঃ জসিম উদ্দিন',seller:'জসিম উদ্দিন',khas:false,mortgage:'',mamla:'দেওয়ানি মামলা ২৪৫/২০২৪ (বিচারাধীন)',khajnaDue:0,namjari:false,transfers5:4}
+];
+const normName=s=>String(s).replace(/(মোহাম্মদ|মোহাম্মাদ|মোঃ|মো[:.]?)/g,'').replace(/[\s.,:ঃ]/g,'');
+
+function findRecord(khotian,dag){
+  const k=toEn(khotian).trim(), d=toEn(dag).trim();
+  return RECORDS.find(r=>r.khotian===k&&r.dag===d)||null;
+}
+
+function riskCheck(rec,seller){
+  const checks=[]; let cut=0;
+  const add=(st,title,detail,tip,pts)=>{checks.push({st,title,detail,tip});cut+=pts||0};
+  const critical=[];
+  // 1 owner
+  if(!seller.trim()) add('warn','মালিকানা মিল','বিক্রেতার নাম দেননি, তাই ডেমো রেকর্ডের নামের সাথে তুলনা করা যায়নি। বাস্তব মালিকানা যাচাই হয়নি।','বিক্রেতার নাম দিয়ে আবার যাচাই করুন।',10);
+  else if(normName(seller)===normName(rec.owner)) add('ok','মালিকানা মিল','ডেমো রেকর্ডে মালিক '+rec.owner+' দেখানো; নাম মিলে গেছে। সরকারি মালিকানা যাচাই করা হয়নি।','',0);
+  else {add('bad','মালিকানা মিল','ডেমো রেকর্ডে মালিক '+rec.owner+', কিন্তু বিক্রেতা '+seller.trim()+'। এটি কেবল নমুনার অমিল; বাস্তব মালিকানা যাচাই করা হয়নি।','মালিকের এনআইডি এবং ওয়ারিশ হলে ওয়ারিশান সনদ দেখতে চান।',40);critical.push('owner')}
+  // 2 khas
+  if(rec.khas){add('bad','খাস জমি','এই ডেমো রেকর্ডে জমিটি সরকারি খাস হিসেবে দেখানো। এটি বাস্তব জমির শ্রেণি যাচাই করে না।','উপজেলা ভূমি অফিসে নিশ্চিত হন।',60);critical.push('khas')}
+  else add('ok','খাস জমি','ডেমো রেকর্ডে খাস জমি হিসেবে চিহ্নিত নয়; বাস্তব শ্রেণি যাচাই করা হয়নি।','',0);
+  // 3 mamla
+  if(rec.mamla){add('bad','মামলা','চলমান মামলা: '+rec.mamla+'।','মামলা শেষ না হওয়া পর্যন্ত কেনা ঠিক নয়। আইনজীবীর সাথে কথা বলুন।',35);critical.push('mamla')}
+  else add('ok','মামলা','এই ডেমো রেকর্ডে মামলার তথ্য নেই; বাস্তব মামলা অনুসন্ধান করা হয়নি।','',0);
+  // 4 mortgage
+  if(rec.mortgage) add('warn','বন্ধক','বন্ধক আছে: '+rec.mortgage+'।','ঋণ পরিশোধের প্রমাণ ও বন্ধক মুক্তির কাগজ ছাড়া কিনবেন না।',25);
+  else add('ok','বন্ধক','এই ডেমো রেকর্ডে বন্ধকের তথ্য নেই; বাস্তব বন্ধক যাচাই করা হয়নি।','',0);
+  // 5 khajna
+  if(rec.khajnaDue>0) add('warn','খাজনা (ভূমি উন্নয়ন কর)',bn(rec.khajnaDue)+' বছরের খাজনা বকেয়া।','বিক্রেতাকে দিয়ে বকেয়া শোধ করিয়ে দাখিলা নিন।',rec.khajnaDue>=2?20:10);
+  else add('ok','খাজনা (ভূমি উন্নয়ন কর)','ডেমো রেকর্ডে খাজনা বকেয়া দেখানো নেই; সরকারি দাখিলা যাচাই করা হয়নি।','',0);
+  // 6 namjari
+  if(rec.namjari) add('ok','নামজারি','ডেমো রেকর্ডে নামজারি সম্পন্ন দেখানো; সরকারি রেকর্ড যাচাই করা হয়নি।','',0);
+  else add('warn','নামজারি','নামজারি হয়নি, মালিকের নামে খতিয়ান নেই।','আগে নামজারি করিয়ে নিতে বলুন।',15);
+  // 7 transfers
+  if(rec.transfers5>=3) add('warn','হাতবদল','ডেমো রেকর্ডে গত ৫ বছরে '+bn(rec.transfers5)+' বার হাতবদল দেখানো হয়েছে; প্রকৃত দলিলের ইতিহাস যাচাই হয়নি।','পূর্বের সব দলিল (বায়া দলিল) পুরোটা যাচাই করুন।',15);
+  else add('ok','হাতবদল','ডেমো রেকর্ডে গত ৫ বছরে '+bn(rec.transfers5)+' বার হাতবদল দেখানো হয়েছে; দলিলের ইতিহাস যাচাই করা হয়নি।','',0);
+  let score=Math.max(0,100-cut);
+  if(critical.length) score=Math.min(score,39);
+  const level=critical.length||score<40?'bad':score<75?'warn':'ok';
+  return {score,level,checks,critical};
+}
+
+/* fractions */
+const gcd=(a,b)=>b?gcd(b,a%b):a;
+const F=(n,d=1)=>{const g=gcd(Math.abs(n),d)||1;return {n:n/g,d:d/g}};
+const fadd=(a,b)=>F(a.n*b.d+b.n*a.d,a.d*b.d);
+const fsub=(a,b)=>F(a.n*b.d-b.n*a.d,a.d*b.d);
+const fmul=(a,b)=>F(a.n*b.n,a.d*b.d);
+const fdiv=(a,b)=>F(a.n*b.d,a.d*b.n);
+const fnum=a=>a.n/a.d;
+const ZERO=F(0), ONE=F(1);
+
+function calcHeirs(o){
+  const {male,spouse,sons,daughters,father,mother}=o;
+  const kids=sons+daughters, hasChild=kids>0;
+  const g={}; const notes=[];
+  if(spouse>0){
+    const t=male?(hasChild?F(1,8):F(1,4)):(hasChild?F(1,4):F(1,2));
+    g.spouse={count:spouse,total:t};
+  }
+  const sp=g.spouse?g.spouse.total:ZERO;
+  if(mother>0){
+    let t;
+    if(hasChild) t=F(1,6);
+    else if(father>0&&spouse>0) t=fmul(fsub(ONE,sp),F(1,3));
+    else t=F(1,3);
+    g.mother={count:1,total:t};
+  }
+  if(father>0&&hasChild) g.father={count:1,total:F(1,6)};
+  if(daughters>0&&sons===0) g.daughters={count:daughters,total:daughters===1?F(1,2):F(2,3)};
+  let fixed=Object.values(g).reduce((s,x)=>fadd(s,x.total),ZERO);
+  if(fixed.n>fixed.d){
+    Object.keys(g).forEach(k=>g[k]={count:g[k].count,total:fdiv(g[k].total,fixed)});
+    fixed=ONE; notes.push('অংশের যোগফল ১-এর বেশি হওয়ায় সবার অংশ সমানুপাতে কমানো হয়েছে (আউল)।');
+  }
+  const residue=fsub(ONE,fixed);
+  if(residue.n>0){
+    if(sons>0){
+      const W=2*sons+daughters;
+      g.sons={count:sons,total:fmul(residue,F(2*sons,W))};
+      if(daughters>0) g.daughters={count:daughters,total:fmul(residue,F(daughters,W))};
+    } else if(father>0){
+      g.father=g.father?{count:1,total:fadd(g.father.total,residue)}:{count:1,total:residue};
+    } else {
+      const keys=Object.keys(g).filter(k=>k!=='spouse');
+      if(keys.length){
+        const base=keys.reduce((s,k)=>fadd(s,g[k].total),ZERO);
+        keys.forEach(k=>g[k]={count:g[k].count,total:fadd(g[k].total,fmul(residue,fdiv(g[k].total,base)))});
+        notes.push('অবশিষ্ট অংশ স্বামী/স্ত্রী বাদে অন্য ওয়ারিশদের মধ্যে সমানুপাতে ভাগ হয়েছে (রাদ)।');
+      } else if(g.spouse){
+        g.spouse={count:g.spouse.count,total:ONE};
+        notes.push('অন্য কোনো ওয়ারিশ না থাকায় পুরো সম্পত্তি স্বামী/স্ত্রী ধরা হয়েছে। বাস্তবে ভাই-বোন বা অন্য আত্মীয় থাকলে হিসাব বদলাবে।');
+      }
+    }
+  }
+  const labels={spouse:male?'স্ত্রী':'স্বামী',father:'পিতা',mother:'মাতা',sons:'ছেলে',daughters:'মেয়ে'};
+  const order=['spouse','father','mother','sons','daughters'];
+  const groups=order.filter(k=>g[k]).map(k=>({key:k,label:labels[k],count:g[k].count,total:g[k].total,each:fdiv(g[k].total,F(g[k].count))}));
+  return {groups,notes};
+}
+
+function calcCost(o){
+  const base=Math.max(o.price,o.assessed||0);
+  const lines=[
+    {k:'reg',label:'রেজিস্ট্রেশন ফি',rate:o.reg},
+    {k:'stamp',label:'স্ট্যাম্প শুল্ক',rate:o.stamp},
+    {k:'lg',label:'স্থানীয় সরকার কর',rate:o.lg},
+    {k:'src',label:'উৎসে কর',rate:o.src}
+  ].map(l=>({...l,amount:Math.round(base*l.rate/100)}));
+  const misc=Math.round(o.misc||0);
+  const total=lines.reduce((s,l)=>s+l.amount,0)+misc;
+  return {base,lines,misc,total,pct:o.price>0?total/o.price*100:0,usedAssessed:(o.assessed||0)>o.price};
+}
+</script>
+
+<script>
+/* ---------- UI ---------- */
+const $=(s,r=document)=>r.querySelector(s);
+const $$=(s,r=document)=>[...r.querySelectorAll(s)];
+
+/* tabs */
+function showTab(t){
+  if(!['risk','heirs','cost'].includes(t)) t='risk';
+  $$('.tab').forEach(b=>b.setAttribute('aria-selected',String(b.dataset.t===t)));
+  ['risk','heirs','cost'].forEach(x=>{$('#panel-'+x).hidden=x!==t});
+  try{history.replaceState(null,'','#'+t)}catch(e){}
+  window.scrollTo(0,0);
+}
+$$('.tab').forEach(b=>b.addEventListener('click',()=>showTab(b.dataset.t)));
+
+/* risk */
+const samplesEl=$('#samples');
+RECORDS.forEach((r,i)=>{
+  const b=document.createElement('button');
+  b.type='button'; b.className='chip'; b.dataset.i=i; b.setAttribute('aria-pressed','false');
+  b.innerHTML='<span>খতিয়ান '+bn(r.khotian)+' · দাগ '+bn(r.dag)+'</span><small>'+esc(r.mouza)+'</small>';
+  b.addEventListener('click',()=>{fillSample(i);runRisk()});
+  samplesEl.appendChild(b);
+});
+function fillSample(i){
+  const r=RECORDS[i];
+  $('#khotian').value=bn(r.khotian); $('#dag').value=bn(r.dag); $('#seller').value=r.seller;
+  $$('.chip').forEach(c=>c.setAttribute('aria-pressed',String(Number(c.dataset.i)===i)));
+}
+const ICON={ok:'✓',warn:'!',bad:'✕'};
+function runRisk(){
+  const out=$('#riskOut');
+  const rec=findRecord($('#khotian').value,$('#dag').value);
+  const idx=rec?RECORDS.indexOf(rec):-1;
+  $$('.chip').forEach(c=>c.setAttribute('aria-pressed',String(Number(c.dataset.i)===idx)));
+  if(!rec){
+    out.innerHTML='<div class="card"><div class="empty">এই খতিয়ান ও দাগ নম্বর চারটি নমুনা ডেমো রেকর্ডে নেই। এটি বাস্তব রেকর্ডে অনুপস্থিতির প্রমাণ নয়। সরকারি ভূমি রেকর্ডের সঙ্গে সংযোগ না থাকায় এখানে প্রকৃত যাচাই সম্ভব নয়।</div></div>';
+    return;
+  }
+  const r=riskCheck(rec,$('#seller').value);
+  const verdict={ok:['ডেমোতে কম ঝুঁকির সংকেত','এটি নিরাপদ জমির নিশ্চয়তা নয়। সরকারি রেকর্ড ও মূল দলিল স্বাধীনভাবে যাচাই করুন।'],warn:['ডেমোতে সতর্কতার সংকেত','নিচের বিষয়গুলো সরকারি নথি ও আইনজীবীর মাধ্যমে যাচাই করুন।'],bad:['ডেমোতে গুরুতর ঝুঁকির সংকেত','এই নমুনায় গুরুতর সতর্কতা আছে। বাস্তব জমি সম্পর্কে সিদ্ধান্তের আগে সরকারি নথি যাচাই করুন।']}[r.level];
+  const label={ok:'সবুজ',warn:'হলুদ',bad:'লাল'}[r.level];
+  out.innerHTML=
+   '<div class="status-banner"><strong>শুধু ডেমো রেকর্ডের ফলাফল</strong>এই স্কোর কোনো সরকারি যাচাই নয় এবং জমি কেনার নিরাপত্তা নিশ্চিত করে না।</div>'+
+   '<div class="card verdict">'+
+     '<div class="score-row"><div class="score">'+nf(r.score,0)+'<small> / '+nf(100,0)+' ডেমো স্কোর</small></div><span class="pill '+r.level+'">'+label+': '+verdict[0]+'</span></div>'+
+     '<div class="meter" role="img" aria-label="নিরাপত্তা স্কোর '+nf(r.score,0)+'"><i class="fill '+r.level+'" style="width:'+r.score+'%"></i><b class="tick" style="left:40%"></b><b class="tick" style="left:75%"></b></div>'+
+     '<div class="zones"><span style="flex:0 0 40%">ঝুঁকিপূর্ণ ০–৩৯</span><span style="flex:0 0 35%">সতর্ক ৪০–৭৪</span><span style="flex:1">নিরাপদ ৭৫+</span></div>'+
+     '<p class="lede">'+verdict[1]+'</p>'+
+     '<dl class="rec"><dt>মৌজা</dt><dd>'+esc(rec.mouza)+'</dd><dt>রেকর্ডের মালিক</dt><dd>'+esc(rec.owner)+'</dd><dt>পরিমাণ</dt><dd>'+nf(rec.area)+' শতাংশ</dd></dl>'+
+   '</div>'+
+   '<div class="card"><h3>ডেমো রেকর্ডের সাতটি সংকেত</h3><ul class="checks">'+
+   r.checks.map(c=>'<li class="check"><span class="mark '+c.st+'" aria-hidden="true">'+ICON[c.st]+'</span><div><h3>'+c.title+'</h3><p>'+esc(c.detail)+'</p>'+(c.tip?'<p class="tip"><b>করণীয়:</b> '+esc(c.tip)+'</p>':'')+'</div></li>').join('')+
+   '</ul></div>';
+}
+$('#riskForm').addEventListener('submit',e=>{e.preventDefault();runRisk()});
+
+/* heirs */
+const H={male:true,spouse:1,sons:2,daughters:1,father:0,mother:1};
+const STEPS=[
+  {k:'spouse',max:()=>H.male?4:1,label:()=>H.male?'স্ত্রী':'স্বামী'},
+  {k:'sons',max:()=>12,label:()=>'ছেলে'},
+  {k:'daughters',max:()=>12,label:()=>'মেয়ে'},
+  {k:'father',max:()=>1,label:()=>'পিতা'},
+  {k:'mother',max:()=>1,label:()=>'মাতা'}
+];
+function buildSteppers(){
+  $('#steppers').innerHTML=STEPS.map(s=>
+    '<div class="stepper"><span class="label" id="sl-'+s.k+'">'+s.label()+'</span><div class="ctl">'+
+    '<button type="button" id="dec-'+s.k+'" data-k="'+s.k+'" data-d="-1" aria-label="'+s.label()+' কমান">−</button>'+
+    '<output id="val-'+s.k+'" aria-labelledby="sl-'+s.k+'">'+bn(H[s.k])+'</output>'+
+    '<button type="button" id="inc-'+s.k+'" data-k="'+s.k+'" data-d="1" aria-label="'+s.label()+' বাড়ান">+</button></div></div>').join('');
+  $$('#steppers button').forEach(b=>b.addEventListener('click',()=>{
+    const s=STEPS.find(x=>x.k===b.dataset.k);
+    H[s.k]=Math.min(s.max(),Math.max(0,H[s.k]+Number(b.dataset.d)));
+    syncSteppers();renderHeirs();
+  }));
+  syncSteppers();
+}
+function syncSteppers(){
+  STEPS.forEach(s=>{
+    H[s.k]=Math.min(H[s.k],s.max());
+    $('#sl-'+s.k).textContent=s.label();
+    $('#val-'+s.k).textContent=bn(H[s.k]);
+    $('#dec-'+s.k).disabled=H[s.k]<=0;
+    $('#inc-'+s.k).disabled=H[s.k]>=s.max();
+  });
+}
+$$('#gender button').forEach(b=>b.addEventListener('click',()=>{
+  H.male=b.dataset.v==='male';
+  $$('#gender button').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));
+  syncSteppers();renderHeirs();
+}));
+$('#landArea').addEventListener('input',renderHeirs);
+function renderHeirs(){
+  const out=$('#heirOut'); const areaResult=parseStrictNumber($('#landArea').value);
+  if(!areaResult.ok || areaResult.value<=0){
+    setFieldError($('#landArea'),areaResult.ok?'জমির পরিমাণ শূন্যের বেশি হতে হবে।':areaResult.message);
+    out.innerHTML='<div class="empty">বৈধ মোট জমির পরিমাণ লিখুন (শূন্যের বেশি)।</div>';return;
+  }
+  setFieldError($('#landArea'),'');
+  const area=areaResult.value;
+  const total=H.spouse+H.sons+H.daughters+H.father+H.mother;
+  if(!total){out.innerHTML='<div class="empty">কমপক্ষে একজন সম্ভাব্য ওয়ারিশ যোগ করুন। শুধু এই তালিকা শূন্য হওয়া মানে বাস্তবে ওয়ারিশ নেই—এমন নয়।</div>';return}
+  const r=calcHeirs({male:H.male,spouse:H.spouse,sons:H.sons,daughters:H.daughters,father:H.father,mother:H.mother});
+  const frac=f=>bn(f.n)+'/'+bn(f.d);
+  out.innerHTML='<h3>কে কত পাবেন</h3><ul class="heirs">'+r.groups.map(x=>{
+    const pct=fnum(x.total)*100, eachPct=fnum(x.each)*100;
+    const amt=area>0?nf(fnum(x.total)*area)+' শতাংশ':nf(pct,1)+'%';
+    const each=x.count>1?'প্রত্যেকে '+frac(x.each)+' ('+nf(eachPct,2)+'%)'+(area>0?' = '+nf(fnum(x.each)*area)+' শতাংশ':''):frac(x.total)+' ('+nf(pct,2)+'%)';
+    return '<li class="heir"><div class="heir-top"><b>'+x.label+(x.count>1?' ('+bn(x.count)+' জন)':'')+'</b><span class="amt">'+amt+'</span></div><div class="bar"><i style="width:'+pct.toFixed(2)+'%"></i></div><small>'+each+'</small></li>';
+  }).join('')+'</ul>'+
+  r.notes.map(n=>'<p class="note warn">'+n+'</p>').join('')+
+  '<p class="note warn">এটি অসম্পূর্ণ উদাহরণভিত্তিক হিসাব, চূড়ান্ত বণ্টন নয়। ভাই-বোন, দাদা-দাদী/নানা-নানী ও অন্যান্য সম্ভাব্য ওয়ারিশ এই সংস্করণে নেই। ঋণ, দাফন-কাফনের খরচ এবং বৈধ ওসিয়তও বাদ। কোনো ওয়ারিশ বাদ পড়লে ফল সম্পূর্ণ বদলে যেতে পারে। পূর্ণ পারিবারিক তথ্য নিয়ে যোগ্য আইনজীবী/বিশেষজ্ঞের যাচাই ছাড়া এই ফল ব্যবহার করবেন না।</p>';
+}
+
+/* cost */
+const taka=x=>'৳'+nf(x,0);
+function renderCost(){
+  const out=$('#costOut');
+  const specs=[
+    ['price','দলিল মূল্য',{min:0,strictMin:true}],
+    ['assessed','সরকারি মৌজা মূল্য',{min:0,optional:true}],
+    ['r-reg','রেজিস্ট্রেশন ফি (%)',{min:0,max:100}],
+    ['r-stamp','স্ট্যাম্প শুল্ক (%)',{min:0,max:100}],
+    ['r-lg','স্থানীয় সরকার কর (%)',{min:0,max:100}],
+    ['r-src','উৎসে কর (%)',{min:0,max:100}],
+    ['misc','অন্যান্য ফি',{min:0,max:1000000000000}]
+  ];
+  const values={}; const errors=[];
+  for(const [id,label,rule] of specs){
+    const input=$('#'+id); const parsed=parseStrictNumber(input.value,{allowEmpty:!!rule.optional});
+    let message='';
+    if(!parsed.ok) message=parsed.message;
+    else if(rule.strictMin && parsed.value<=rule.min) message=label+' শূন্যের বেশি হতে হবে।';
+    else if(!rule.strictMin && parsed.value<rule.min) message=label+' ঋণাত্মক হতে পারবে না।';
+    else if(rule.max!==undefined && parsed.value>rule.max) message=label+' ০ থেকে ১০০-এর মধ্যে দিন।';
+    else if(parsed.value>1000000000000000) message='সংখ্যাটি অনুমোদিত সীমার চেয়ে বড়।';
+    setFieldError(input,message);
+    if(message) errors.push(label+': '+message);
+    else values[id]=parsed.value;
+  }
+  if(errors.length){
+    out.innerHTML='<div class="empty" role="alert"><strong>হিসাব করা যায়নি</strong><p>আগে ইনপুটগুলো ঠিক করুন:</p><ul>'+errors.map(e=>'<li>'+esc(e)+'</li>').join('')+'</ul></div>';
+    return;
+  }
+  const o={price:values.price,assessed:values.assessed||0,reg:values['r-reg'],stamp:values['r-stamp'],lg:values['r-lg'],src:values['r-src'],misc:values.misc};
+  const c=calcCost(o);
+  out.innerHTML=
+   '<div class="status-banner"><strong>শুধু আনুমানিক হিসাব</strong>হারগুলো ব্যবহারকারীর দেওয়া/ডিফল্ট অনুমান; বর্তমান সরকারি হার, এলাকা বা দলিলের ধরন যাচাই করা হয়নি।</div>'+ 
+   '<div class="big"><span>দলিল মূল্য ও রেজিস্ট্রি খরচ মিলিয়ে মোট</span><strong>'+taka(o.price+c.total)+'</strong></div>'+ 
+   '<table class="cost"><tbody>'+ 
+   c.lines.map(l=>'<tr><th scope="row">'+l.label+'<small>'+nf(l.rate,2)+'% × '+taka(c.base)+'</small></th><td>'+taka(l.amount)+'</td></tr>').join('')+ 
+   '<tr><th scope="row">অন্যান্য ফি</th><td>'+taka(c.misc)+'</td></tr></tbody>'+ 
+   '<tfoot><tr><th scope="row">আনুমানিক রেজিস্ট্রি খরচ<small>দলিল মূল্যের '+nf(c.pct,2)+'%</small></th><td>'+taka(c.total)+'</td></tr></tfoot></table>'+ 
+   (c.usedAssessed?'<p class="note warn">আপনার দেওয়া সরকারি মৌজা মূল্য দলিল মূল্যের চেয়ে বেশি, তাই অনুমানের জন্য সেটি ব্যবহার করা হয়েছে। এই মূল্য স্বাধীনভাবে যাচাই করা হয়নি।</p>':'')+ 
+   '<p class="note">এই ফল সরকারি কোটেশন নয়। জমির অবস্থান, দলিলের ধরন, মূল্যায়ন এবং কার্যকর বিধি অনুযায়ী ফি বদলাতে পারে। সাব-রেজিস্ট্রার অফিসে বর্তমান হার নিশ্চিত করুন।</p>';
+}
+['#price','#assessed','#r-reg','#r-stamp','#r-lg','#r-src','#misc'].forEach(s=>$(s).addEventListener('input',renderCost));
+
+const DOCS=[
+  ['মূল দলিল ও বায়া দলিল','আগের সব হাতবদলের দলিল'],
+  ['সর্বশেষ খতিয়ান (পর্চা)','সিএস, আরএস, বিএস ও চলতি রেকর্ড'],
+  ['নামজারি খতিয়ান','বিক্রেতার নামে মিউটেশন হয়েছে কি না'],
+  ['হালনাগাদ খাজনার দাখিলা','চলতি বছরসহ'],
+  ['মৌজা ম্যাপ ও দাগ নম্বর','সীমানা সরেজমিনে মেলানো'],
+  ['মালিকের এনআইডি','বিক্রেতার পরিচয় যাচাই'],
+  ['ওয়ারিশান সনদ','ওয়ারিশসূত্রে পাওয়া জমি হলে'],
+  ['মামলা ও বন্ধকমুক্ত প্রমাণ','হলফনামা এবং ব্যাংক বা সংস্থার ছাড়পত্র']
+];
+$('#docs').innerHTML=DOCS.map((d,i)=>'<li><label for="doc'+i+'"><input type="checkbox" id="doc'+i+'"><span>'+d[0]+'<small>'+d[1]+'</small></span></label></li>').join('');
+function docCount(){const n=$$('#docs input:checked').length;$('#docCount').textContent=bn(n)+'/'+bn(DOCS.length)+' প্রস্তুত'}
+$$('#docs input').forEach(i=>i.addEventListener('change',docCount));
+
+/* boot with a realistic working state */
+fillSample(1); runRisk();
+buildSteppers(); renderHeirs();
+renderCost(); docCount();
+showTab((location.hash||'#risk').slice(1));
+</script>
+
+
+<script>
+/* ---------- BILINGUAL UI ---------- */
+window.JOMI_LANG = 'bn';
+const JOMI_TRANSLATIONS = [
+['জমি কেনার আগে দেখে নিন','Check before buying land'],
+['জমি কেনার ঝুঁকি যাচাই','Land purchase risk check'],
+['খতিয়ান ও দাগ নম্বর দিয়ে ডেমো যাচাই চালান। এটি সরকারি ভূমি রেকর্ডে অনুসন্ধান করে না।','Run a demo check using the khatian and plot numbers. This does not search government land records.'],
+['ডেমো ডেটা — সরকারি যাচাই নয়','Demo data — not government-verified'],
+['নিচের চারটি রেকর্ড এই প্রোটোটাইপের নমুনা। ফলাফল বাস্তব খতিয়ান, মামলা, বন্ধক, খাজনা বা নামজারি যাচাই করে না; “তথ্য পাওয়া যায়নি” মানে সরকারি রেকর্ডে সমস্যা নেই—এমন নয়।','The four records below are prototype samples. Results do not verify real land records, cases, mortgages, land tax, or mutation. “No information found” does not mean government records show no issues.'],
+['নমুনা রেকর্ড বেছে নিন','Choose a sample record'],['খতিয়ান নং','Khatian no.'],['দাগ নং','Plot no.'],['বিক্রেতার নাম','Seller name'],['যার কাছ থেকে কিনবেন','Person you plan to buy from'],['যাচাই করুন','Check record'],
+['ওয়ারিশ হিসাব','Inheritance estimate'],
+['মুসলিম আইন (হানাফি)-এর সীমিত উদাহরণভিত্তিক হিসাব। এটি পূর্ণাঙ্গ ওয়ারিশ নির্ধারণ বা আইনি মতামত নয়।','A limited illustrative calculation based on Muslim (Hanafi) rules. This is not a complete heir determination or legal opinion.'],
+['শুধু প্রাথমিক ধারণার জন্য','For initial guidance only'],
+['হিসাবটি কেবল কয়েক ধরনের ওয়ারিশ ধরে। ভাই-বোন, দাদা-দাদী/নানা-নানী, অন্যান্য সম্ভাব্য ওয়ারিশ, ঋণ, দাফন-কাফনের খরচ ও বৈধ ওসিয়ত বিবেচনা করে না। বাস্তব বণ্টনের আগে সম্পূর্ণ ওয়ারিশ তালিকা ও আইনজীবীর পরামর্শ জরুরি।','This estimate includes only a few heir categories. It excludes siblings, grandparents, other possible heirs, debts, funeral expenses, and valid bequests. Confirm the complete list of heirs and consult a lawyer before any real distribution.'],
+['মৃত ব্যক্তি','Deceased person'],['পুরুষ','Male'],['নারী','Female'],['মোট জমি (শতাংশ)','Total land (decimal)'],
+['রেজিস্ট্রি খরচ','Registration cost'],['আপনার দেওয়া মূল্য ও হার দিয়ে আনুমানিক হিসাব। হার সরকারি ভাবে যাচাই করা নয়।','An estimate using the price and rates you enter. Rates have not been officially verified.'],
+['দলিল মূল্য (টাকা)','Deed price (BDT)'],['সরকারি মৌজা মূল্য (ঐচ্ছিক)','Government mouza value (optional)'],['জানা থাকলে','If known'],['রেজিস্ট্রেশন ফি (%)','Registration fee (%)'],['স্ট্যাম্প শুল্ক (%)','Stamp duty (%)'],['স্থানীয় সরকার কর (%)','Local government tax (%)'],['উৎসে কর (%)','Source tax (%)'],['অন্যান্য ফি (এফিডেভিট, কোর্ট ফি ইত্যাদি, টাকা)','Other fees (affidavit, court fees, etc., BDT)'],
+['কাগজপত্র তালিকা','Document checklist'],['জমিসেফ একটি হ্যাকাথন প্রোটোটাইপ। এখানকার তথ্য নমুনা এবং আইনি পরামর্শ নয়। কেনার আগে সাব-রেজিস্ট্রার অফিস ও আইনজীবীর সাথে মিলিয়ে নিন।','JomiSafe is a hackathon prototype. Information shown is sample data, not legal advice. Confirm with the sub-registrar office and a lawyer before buying.'],
+['জমি যাচাই','Land check'],['ওয়ারিশ','Heirs'],['রেজিস্ট্রি খরচ','Registration cost'],['জমিসেফ বিভাগ','JomiSafe sections'],
+['মালিকানা মিল','Ownership match'],['বিক্রেতার নাম দেননি, তাই ডেমো রেকর্ডের নামের সাথে তুলনা করা যায়নি। বাস্তব মালিকানা যাচাই হয়নি।','No seller name was entered, so it could not be compared with the demo record. Real ownership has not been verified.'],['বিক্রেতার নাম দিয়ে আবার যাচাই করুন।','Check again with the seller name.'],['ডেমো রেকর্ডে মালিক ','The demo record lists the owner as '],[' দেখানো; নাম মিলে গেছে। সরকারি মালিকানা যাচাই করা হয়নি।','; the names match. Government ownership has not been verified.'],[', কিন্তু বিক্রেতা ','; however, the seller is '],['। এটি কেবল নমুনার অমিল; বাস্তব মালিকানা যাচাই করা হয়নি।',' . This is only a mismatch in sample data; real ownership has not been verified.'],['মালিকের এনআইডি এবং ওয়ারিশ হলে ওয়ারিশান সনদ দেখতে চান।','Ask to see the owner’s national ID and, if inherited, the heirship certificate.'],
+['খাস জমি','Government khas land'],['এই ডেমো রেকর্ডে জমিটি সরকারি খাস হিসেবে দেখানো। এটি বাস্তব জমির শ্রেণি যাচাই করে না।','This demo record marks the land as government khas land. It does not verify the real land classification.'],['উপজেলা ভূমি অফিসে নিশ্চিত হন।','Confirm with the upazila land office.'],['ডেমো রেকর্ডে খাস জমি হিসেবে চিহ্নিত নয়; বাস্তব শ্রেণি যাচাই করা হয়নি।','The demo record does not mark it as khas land; the real classification has not been verified.'],
+['মামলা','Legal case'],['চলমান মামলা: ','Ongoing case: '],['মামলা শেষ না হওয়া পর্যন্ত কেনা ঠিক নয়। আইনজীবীর সাথে কথা বলুন।','Do not proceed until the case is resolved. Consult a lawyer.'],['এই ডেমো রেকর্ডে মামলার তথ্য নেই; বাস্তব মামলা অনুসন্ধান করা হয়নি।','This demo record has no case information; no real case search was performed.'],
+['বন্ধক','Mortgage'],['বন্ধক আছে: ','Mortgage listed: '],['ঋণ পরিশোধের প্রমাণ ও বন্ধক মুক্তির কাগজ ছাড়া কিনবেন না।','Do not buy without proof of loan repayment and mortgage release.'],['এই ডেমো রেকর্ডে বন্ধকের তথ্য নেই; বাস্তব বন্ধক যাচাই করা হয়নি।','This demo record has no mortgage information; no real mortgage check was performed.'],
+['খাজনা (ভূমি উন্নয়ন কর)','Land development tax'],[' বছরের খাজনা বকেয়া।',' year(s) of land tax are outstanding.'],['বিক্রেতাকে দিয়ে বকেয়া শোধ করিয়ে দাখিলা নিন।','Have the seller pay the arrears and provide the receipt.'],['ডেমো রেকর্ডে খাজনা বকেয়া দেখানো নেই; সরকারি দাখিলা যাচাই করা হয়নি।','No land-tax arrears are shown in the demo record; no official receipt was checked.'],
+['নামজারি','Mutation'],['ডেমো রেকর্ডে নামজারি সম্পন্ন দেখানো; সরকারি রেকর্ড যাচাই করা হয়নি।','Mutation is marked complete in the demo record; government records were not checked.'],['নামজারি হয়নি, মালিকের নামে খতিয়ান নেই।','Mutation is not complete; there is no khatian in the owner’s name.'],['আগে নামজারি করিয়ে নিতে বলুন।','Ask the seller to complete mutation first.'],
+['হাতবদল','Ownership transfers'],['ডেমো রেকর্ডে গত ৫ বছরে ','The demo record shows '],[' বার হাতবদল দেখানো হয়েছে; প্রকৃত দলিলের ইতিহাস যাচাই হয়নি।',' transfer(s) in the last 5 years; the actual deed history has not been verified.'],['পূর্বের সব দলিল (বায়া দলিল) পুরোটা যাচাই করুন।','Review all previous deeds in full.'],
+['ডেমোতে কম ঝুঁকির সংকেত','Lower-risk signal in demo'],['ডেমোতে সতর্কতার সংকেত','Caution signal in demo'],['ডেমোতে গুরুতর ঝুঁকির সংকেত','Serious risk signal in demo'],['এটি নিরাপদ জমির নিশ্চয়তা নয়। সরকারি রেকর্ড ও মূল দলিল স্বাধীনভাবে যাচাই করুন।','This does not guarantee the land is safe. Independently verify government records and original deeds.'],['নিচের বিষয়গুলো সরকারি নথি ও আইনজীবীর মাধ্যমে যাচাই করুন।','Verify the following with official documents and a lawyer.'],['এই নমুনায় গুরুতর সতর্কতা আছে। বাস্তব জমি সম্পর্কে সিদ্ধান্তের আগে সরকারি নথি যাচাই করুন।','This sample contains serious warnings. Check official documents before making a decision about real land.'],['সবুজ','Green'],['হলুদ','Yellow'],['লাল','Red'],['শুধু ডেমো রেকর্ডের ফলাফল','Demo-record result only'],['এই স্কোর কোনো সরকারি যাচাই নয় এবং জমি কেনার নিরাপত্তা নিশ্চিত করে না।','This score is not an official verification and does not establish that the land is safe to buy.'],[' ডেমো স্কোর',' demo score'],['ঝুঁকিপূর্ণ ০–৩৯','High risk 0–39'],['সতর্ক ৪০–৭৪','Caution 40–74'],['নিরাপদ ৭৫+','Fewer demo warnings 75+'],['মৌজা','Mouza'],['রেকর্ডের মালিক','Owner in record'],['পরিমাণ','Area'],[' শতাংশ',' decimal'],['ডেমো রেকর্ডের সাতটি সংকেত','Seven signals in the demo record'],['করণীয়:','Next step:'],
+['এই খতিয়ান ও দাগ নম্বর চারটি নমুনা ডেমো রেকর্ডে নেই। এটি বাস্তব রেকর্ডে অনুপস্থিতির প্রমাণ নয়। সরকারি ভূমি রেকর্ডের সঙ্গে সংযোগ না থাকায় এখানে প্রকৃত যাচাই সম্ভব নয়।','These khatian and plot numbers are not in the four sample records. This does not prove they are absent from real records. Actual verification is not possible because this app is not connected to government land records.'],
+['কে কত পাবেন','Estimated share by heir'],['কমপক্ষে একজন সম্ভাব্য ওয়ারিশ যোগ করুন। শুধু এই তালিকা শূন্য হওয়া মানে বাস্তবে ওয়ারিশ নেই—এমন নয়।','Add at least one possible heir. An empty list here does not mean there are no heirs in reality.'],['বৈধ মোট জমির পরিমাণ লিখুন (শূন্যের বেশি)।','Enter a valid total land area greater than zero.'],['একটি সংখ্যা লিখুন।','Enter a number.'],['শুধু বৈধ সংখ্যা লিখুন; অক্ষর বা ভুল কমা ব্যবহার করবেন না।','Enter a valid number; do not use letters or incorrect commas.'],['সংখ্যাটি গ্রহণযোগ্য সীমার বাইরে।','The number is outside the accepted range.'],['জমির পরিমাণ শূন্যের বেশি হতে হবে।','Land area must be greater than zero.'],['অংশের যোগফল ১-এর বেশি হওয়ায় সবার অংশ সমানুপাতিকভাবে কমানো হয়েছে (আউল)।','The shares exceeded 1, so all shares were proportionally reduced (awl).'],['অবশিষ্ট অংশ স্বামী/স্ত্রী বাদে অন্য ওয়ারিশদের মধ্যে সমানুপাতে ভাগ হয়েছে (রাদ)।','The remainder was redistributed proportionally among heirs other than the spouse (radd).'],['অন্য কোনো ওয়ারিশ না থাকায় পুরো সম্পত্তি স্বামী/স্ত্রী ধরা হয়েছে। বাস্তবে ভাই-বোন বা অন্য আত্মীয় থাকলে হিসাব বদলাবে।','As no other heirs were entered, the whole estate is assigned to the spouse. Siblings or other relatives may change the result.'],['স্ত্রী','Wife'],['স্বামী','Husband'],['পিতা','Father'],['মাতা','Mother'],['ছেলে','Son'],['মেয়ে','Daughter'],['প্রত্যেকে ','Each receives '],[' জন)',' people)'],['এটি অসম্পূর্ণ উদাহরণভিত্তিক হিসাব, চূড়ান্ত বণ্টন নয়। ভাই-বোন, দাদা-দাদী/নানা-নানী ও অন্যান্য সম্ভাব্য ওয়ারিশ এই সংস্করণে নেই। ঋণ, দাফন-কাফনের খরচ এবং বৈধ ওসিয়তও বাদ। কোনো ওয়ারিশ বাদ পড়লে ফল সম্পূর্ণ বদলে যেতে পারে। পূর্ণ পারিবারিক তথ্য নিয়ে যোগ্য আইনজীবী/বিশেষজ্ঞের যাচাই ছাড়া এই ফল ব্যবহার করবেন না।','This is an incomplete illustrative estimate, not a final distribution. Siblings, grandparents, and other possible heirs are not included. Debts, funeral expenses, and valid bequests are also excluded. Missing an heir can change the result entirely. Do not rely on this without complete family information and review by a qualified lawyer or specialist.'],
+['হিসাব করা যায়নি','Could not calculate'],['আগে ইনপুটগুলো ঠিক করুন:','Fix these inputs first:'],[' শূন্যের বেশি হতে হবে।',' must be greater than zero.'],[' ঋণাত্মক হতে পারবে না।',' cannot be negative.'],[' ০ থেকে ১০০-এর মধ্যে দিন।',' must be between 0 and 100.'],['সংখ্যাটি অনুমোদিত সীমার চেয়ে বড়।','The number exceeds the allowed limit.'],['শুধু আনুমানিক হিসাব','Estimate only'],['হারগুলো ব্যবহারকারীর দেওয়া/ডিফল্ট অনুমান; বর্তমান সরকারি হার, এলাকা বা দলিলের ধরন যাচাই করা হয়নি।','Rates are user-entered/default estimates; current official rates, location, and deed type have not been verified.'],['দলিল মূল্য ও রেজিস্ট্রি খরচ মিলিয়ে মোট','Total including deed price and registration costs'],['অন্যান্য ফি','Other fees'],['আনুমানিক রেজিস্ট্রি খরচ','Estimated registration costs'],['আপনার দেওয়া সরকারি মৌজা মূল্য দলিল মূল্যের চেয়ে বেশি, তাই অনুমানের জন্য সেটি ব্যবহার করা হয়েছে। এই মূল্য স্বাধীনভাবে যাচাই করা হয়নি।','The government mouza value you entered exceeds the deed price, so it was used for this estimate. This value has not been independently verified.'],['এই ফল সরকারি কোটেশন নয়। জমির অবস্থান, দলিলের ধরন, মূল্যায়ন এবং কার্যকর বিধি অনুযায়ী ফি বদলাতে পারে। সাব-রেজিস্ট্রার অফিসে বর্তমান হার নিশ্চিত করুন।','This is not an official quotation. Fees may vary by location, deed type, valuation, and applicable rules. Confirm current rates with the sub-registrar office.'],
+['মূল দলিল ও বায়া দলিল','Original and previous deeds'],['আগের সব হাতবদলের দলিল','All previous transfer deeds'],['সর্বশেষ খতিয়ান (পর্চা)','Latest khatian (record copy)'],['সিএস, আরএস, বিএস ও চলতি রেকর্ড','CS, RS, BS, and current records'],['নামজারি খতিয়ান','Mutation record'],['বিক্রেতার নামে মিউটেশন হয়েছে কি না','Whether mutation is in the seller’s name'],['হালনাগাদ খাজনার দাখিলা','Updated land-tax receipt'],['চলতি বছরসহ','Including the current year'],['মৌজা ম্যাপ ও দাগ নম্বর','Mouza map and plot number'],['সীমানা সরেজমিনে মেলানো','Match boundaries on site'],['মালিকের এনআইডি','Owner’s national ID'],['বিক্রেতার পরিচয় যাচাই','Verify seller identity'],['ওয়ারিশান সনদ','Heirship certificate'],['ওয়ারিশসূত্রে পাওয়া জমি হলে','If the land was inherited'],['মামলা ও বন্ধকমুক্ত প্রমাণ','Proof of case/mortgage clearance'],['হলফনামা এবং ব্যাংক বা সংস্থার ছাড়পত্র','Affidavit and release from bank or institution'],[' প্রস্তুত',' ready'],
+['মৃত ব্যক্তি','Deceased person'],['পুরুষ','Male'],['নারী','Female'],['মালিকানা মিল','Ownership match'],['ডেমো রেকর্ড','Demo record'],['তথ্য পাওয়া যায়নি','No information found'],['সরকারি যাচাই নয়','Not government-verified'],
+['ডেমো ডেটা','Demo data'],['খতিয়ান','Khatian'],['দাগ','Plot'],['রেজিস্ট্রেশন ফি','Registration fee'],['স্ট্যাম্প শুল্ক','Stamp duty'],['স্থানীয় সরকার কর','Local government tax'],['উৎসে কর','Source tax'],['ডেমো রেকর্ডে গত ৫ বছরে ','The demo record shows '],[' বার হাতবদল দেখানো হয়েছে; দলিলের ইতিহাস যাচাই করা হয়নি।',' transfer(s) are shown; the deed history has not been verified.'],[' বার হাতবদল দেখানো হয়েছে; প্রকৃত দলিলের ইতিহাস যাচাই হয়নি।',' transfer(s) are shown; the actual deed history has not been verified.'],['হাতবদল দেখানো হয়েছে','transfers are shown'],['খাজনা বকেয়া','land tax outstanding'],['দলিল মূল্যের ','of deed price ']
+];
+const JOMI_BN_TO_EN = [...JOMI_TRANSLATIONS].sort((a,b)=>b[0].length-a[0].length);
+const JOMI_EN_TO_BN = JOMI_TRANSLATIONS.map(([bnText,enText])=>[enText,bnText]).sort((a,b)=>b[0].length-a[0].length);
+function jomiTranslateText(value, lang){
+  let out=String(value);
+  const pairs=lang==='en'?JOMI_BN_TO_EN:JOMI_EN_TO_BN;
+  for(const [from,to] of pairs) if(from && out.includes(from)) out=out.split(from).join(to);
+  return out;
+}
+function applyJomiLanguage(lang){
+  window.JOMI_LANG=lang;
+  document.documentElement.lang=lang==='en'?'en':'bn';
+  // Refresh generated result panels so their labels, messages, and numerals match the selected language.
+  if(typeof originalRunRisk==='function'){originalRunRisk();originalRenderHeirs();originalRenderCost()}
+  const walker=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT);
+  let node;
+  while((node=walker.nextNode())){
+    if(node.parentElement && (node.parentElement.closest('script,style') || node.parentElement.id==='languageToggle')) continue;
+    let translated=jomiTranslateText(node.nodeValue,lang);
+    translated=lang==='en'?translated.replace(/[০-৯]/g,d=>String('০১২৩৪৫৬৭৮৯'.indexOf(d))):translated.replace(/\d/g,d=>'০১২৩৪৫৬৭৮৯'[Number(d)]);
+    node.nodeValue=translated;
+  }
+  for(const el of $$('input[placeholder],button[aria-label],nav[aria-label], [title]')){
+    for(const attr of ['placeholder','aria-label','title']) if(el.hasAttribute(attr)) el.setAttribute(attr,jomiTranslateText(el.getAttribute(attr),lang));
+  }
+  const toggle=$('#languageToggle');
+  toggle.textContent=lang==='en'?'বাংলা':'English';
+  toggle.setAttribute('aria-label',lang==='en'?'Switch language to Bangla':'Switch language to English');
+}
+const originalRunRisk=runRisk, originalRenderHeirs=renderHeirs, originalRenderCost=renderCost;
+runRisk=function(){originalRunRisk();if(window.JOMI_LANG==='en')applyJomiLanguage('en')};
+renderHeirs=function(){originalRenderHeirs();if(window.JOMI_LANG==='en')applyJomiLanguage('en')};
+renderCost=function(){originalRenderCost();if(window.JOMI_LANG==='en')applyJomiLanguage('en')};
+$('#languageToggle').addEventListener('click',()=>applyJomiLanguage(window.JOMI_LANG==='bn'?'en':'bn'));
+// Re-translate UI fragments generated by existing event handlers after they update the DOM.
+['#riskForm','#samples','#steppers','#gender','#panel-heirs','#panel-cost','#docs'].forEach(sel=>{
+  const root=$(sel); if(!root) return;
+  root.addEventListener('input',()=>{if(window.JOMI_LANG==='en')applyJomiLanguage('en')});
+  root.addEventListener('change',()=>{if(window.JOMI_LANG==='en')applyJomiLanguage('en')});
+  root.addEventListener('click',()=>{if(window.JOMI_LANG==='en')applyJomiLanguage('en')});
+  root.addEventListener('submit',()=>{if(window.JOMI_LANG==='en')applyJomiLanguage('en')});
+});
+
+</script>
+
+</body>
+</html>
